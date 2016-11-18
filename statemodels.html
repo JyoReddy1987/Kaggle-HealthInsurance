@@ -1,0 +1,1292 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title>State Models</title>
+  <meta name="Author" content="Jyothsni Reddy">
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="1504">
+  <style type="text/css">
+    p.p4 {margin: 0.0px 0.0px 10.0px 0.0px; line-height: 20.0px; font: 14.0px 'Helvetica Neue'; color: #333333; -webkit-text-stroke: #333333}
+    p.p5 {margin: 0.0px 0.0px 0.0px 0.0px; line-height: 18.0px; font: 13.0px Courier; color: #333333; -webkit-text-stroke: #333333; background-color: #f5f5f5}
+    p.p7 {margin: 0.0px 0.0px 0.0px 0.0px; line-height: 18.0px; font: 13.0px Courier; color: #333333; -webkit-text-stroke: #333333; background-color: #f5f5f5; min-height: 16.0px}
+    p.p8 {margin: 0.0px 0.0px 0.0px 0.0px; line-height: 18.0px; font: 13.0px Courier; color: #333333; -webkit-text-stroke: #333333; background-color: #ffffff}
+    p.p9 {margin: 0.0px 0.0px 0.0px 0.0px; text-align: right; line-height: 20.0px; font: 14.0px 'Helvetica Neue'; color: #333333; -webkit-text-stroke: #333333}
+    p.p10 {margin: 0.0px 0.0px 0.0px 0.0px; line-height: 20.0px; font: 14.0px 'Helvetica Neue'; color: #333333; -webkit-text-stroke: #333333}
+    span.s1 {font-kerning: none}
+    table.t1 {border-collapse: collapse}
+    td.td1 {width: 53.6px}
+    td.td2 {width: 66.2px}
+    td.td3 {width: 80.1px}
+    td.td4 {width: 60.2px}
+  </style>
+</head>
+<body>
+<h1 style="margin: 0.0px 0.0px 10.0px 0.0px; line-height: 41.0px; font: 38.0px 'Helvetica Neue'; color: #333333; -webkit-text-stroke: #333333"><span class="s1">State Models</span></h1>
+<h4 style="margin: 0.0px 0.0px 10.0px 0.0px; line-height: 19.0px; font: 18.0px 'Helvetica Neue'; color: #333333; -webkit-text-stroke: #333333"><span class="s1"><i>Jyothsni Reddy</i></span></h4>
+<h4 style="margin: 0.0px 0.0px 10.0px 0.0px; line-height: 19.0px; font: 18.0px 'Helvetica Neue'; color: #333333; -webkit-text-stroke: #333333"><span class="s1"><i>September 19, 2016</i></span></h4>
+<h2 style="margin: 0.0px 0.0px 10.0px 0.0px; line-height: 33.0px; font: 30.0px 'Helvetica Neue'; color: #333333; -webkit-text-stroke: #333333"><span class="s1">Overview</span></h2>
+<p class="p4"><span class="s1">Regression model at state level for each of TX, PA, SC.</span></p>
+<h2 style="margin: 0.0px 0.0px 10.0px 0.0px; line-height: 33.0px; font: 30.0px 'Helvetica Neue'; color: #333333; -webkit-text-stroke: #333333"><span class="s1">Data</span></h2>
+<p class="p4"><span class="s1">We’re going to use the data prepared in “Preparing Health Insurance Data” (creatingdataset.html).</span></p>
+<p class="p5"><span class="s1">load(file="datasets20160803.RData")</span></p>
+<p class="p5"><span class="s1">library(knitr)</span></p>
+<p class="p5"><span class="s1">library(dplyr)</span></p>
+<h2 style="margin: 0.0px 0.0px 10.0px 0.0px; line-height: 33.0px; font: 30.0px 'Helvetica Neue'; color: #333333; -webkit-text-stroke: #333333"><span class="s1">Make a Benefit Set for Each State</span></h2>
+<h3 style="margin: 0.0px 0.0px 10.0px 0.0px; line-height: 26.0px; font: 24.0px 'Helvetica Neue'; color: #333333; -webkit-text-stroke: #333333"><span class="s1">Subset Data</span></h3>
+<p class="p4"><span class="s1">Start with a dataset for each state for convenience</span></p>
+<p class="p5"><span class="s1">txplans&lt;-plans %&gt;% filter(StateCode=='TX')</span></p>
+<p class="p5"><span class="s1">txpremiums&lt;-premiums %&gt;% filter(planid14 %in% txplans$planid14)</span></p>
+<p class="p5"><span class="s1">txpremiumsplus&lt;-inner_join(txpremiums, txplans)</span></p>
+<p class="p5"><span class="s1">rm(txplans, txpremiums)</span></p>
+<p class="p7"><span class="s1"></span><br></p>
+<p class="p5"><span class="s1">scplans&lt;-plans %&gt;% filter(StateCode=='SC')</span></p>
+<p class="p5"><span class="s1">scpremiums&lt;-premiums %&gt;% filter(planid14 %in% scplans$planid14)</span></p>
+<p class="p5"><span class="s1">scpremiumsplus&lt;-inner_join(scpremiums, scplans)</span></p>
+<p class="p5"><span class="s1">rm(scplans, scpremiums)</span></p>
+<p class="p7"><span class="s1"></span><br></p>
+<p class="p5"><span class="s1">paplans&lt;-plans %&gt;% filter(StateCode=='PA')</span></p>
+<p class="p5"><span class="s1">papremiums&lt;-premiums %&gt;% filter(planid14 %in% paplans$planid14)</span></p>
+<p class="p5"><span class="s1">papremiumsplus&lt;-inner_join(papremiums, paplans)</span></p>
+<p class="p5"><span class="s1">rm(paplans, papremiums)</span></p>
+<h3 style="margin: 0.0px 0.0px 10.0px 0.0px; line-height: 26.0px; font: 24.0px 'Helvetica Neue'; color: #333333; -webkit-text-stroke: #333333"><span class="s1">Benefit Set Variables</span></h3>
+<p class="p4"><span class="s1">I’m going to include the chronic disease management plans as benefits</span></p>
+<p class="p5"><span class="s1">addBenefitSets&lt;-function(plansdata) {</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>benefitcols&lt;-match("asthma", names(plansdata)):match("xraysanddiagnosticimaginghospital", names(plansdata))</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>benefitmat&lt;-plansdata[,benefitcols]</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>#rownames(benefitmat)&lt;-paste(plansdata$planid14, plansdata$BusinessYear, plansdata$RatingArea)</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>benefitmat&lt;-t(benefitmat)</span></p>
+<p class="p7"><span class="s1"><span class="Apple-converted-space">  </span></span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>uniquebenefits&lt;-c(1:nrow(benefitmat))[!duplicated(benefitmat)]</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>benefitsets&lt;-vector("list", sum(!duplicated(benefitmat)))</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>counter &lt;- 1</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>for (i in uniquebenefits) {</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">    </span>benefitsets[[counter]]&lt;-c(rownames(benefitmat)[i])</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">    </span>for (j in (i+1):nrow(benefitmat)) {</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">      </span>if (sum(benefitmat[i,]!=benefitmat[j,])==0) {</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">        </span>benefitsets[[counter]]&lt;-c(benefitsets[[counter]], rownames(benefitmat)[j])</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">      </span>}</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">    </span>counter &lt;- counter+1</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>counter&lt;-1</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>for (blist in benefitsets) {</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">    </span>plansdata[,paste0("bset",counter)]&lt;-rep(0, nrow(plansdata))</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">    </span>for (bname in blist) {</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">      </span>plansdata[plansdata[,bname]==1,paste0("bset",counter)]&lt;-1</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">    </span>}</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">    </span>counter&lt;-counter+1</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>list(plansdata=plansdata, benefitsets=benefitsets) <span class="Apple-converted-space"> </span></span></p>
+<p class="p5"><span class="s1">}</span></p>
+<p class="p5"><span class="s1">tmp&lt;-addBenefitSets(txpremiumsplus)</span></p>
+<p class="p5"><span class="s1">txpremiumsplus&lt;-tmp[[1]]</span></p>
+<p class="p5"><span class="s1">txbenefits&lt;-tmp[[2]]</span></p>
+<p class="p7"><span class="s1"></span><br></p>
+<p class="p5"><span class="s1">tmp&lt;-addBenefitSets(scpremiumsplus)</span></p>
+<p class="p5"><span class="s1">scpremiumsplus&lt;-tmp[[1]]</span></p>
+<p class="p5"><span class="s1">scbenefits&lt;-tmp[[2]]</span></p>
+<p class="p7"><span class="s1"></span><br></p>
+<p class="p5"><span class="s1">tmp&lt;-addBenefitSets(papremiumsplus)</span></p>
+<p class="p5"><span class="s1">papremiumsplus&lt;-tmp[[1]]</span></p>
+<p class="p5"><span class="s1">pabenefits&lt;-tmp[[2]]</span></p>
+<p class="p4"><span class="s1">Eliminate benefit sets that are only offered (or not offered) in a single rating area or by a single issuer:</span></p>
+<p class="p5"><span class="s1">getGoodSets&lt;-function(benefitsets, plansdata) {</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>bset_issuer&lt;-data.frame(issuercount=rep(NA, length(benefitsets)))</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>rownames(bset_issuer) &lt;- names(plansdata)[grep("bset", names(plansdata))]</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>for (bname in rownames(bset_issuer)) {</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">    </span>bset_issuer[bname, "issuercount"]&lt;-length(unique(plansdata[plansdata[,bname]==1, "IssuerId"]))</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p7"><span class="s1"><span class="Apple-converted-space">  </span></span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>bset_issuer_not&lt;-data.frame(issuercount=rep(NA, length(benefitsets)))</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>rownames(bset_issuer_not) &lt;- names(plansdata)[grep("bset", names(plansdata))]</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>for (bname in rownames(bset_issuer_not)) {</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">    </span>bset_issuer_not[bname, "issuercount"]&lt;-length(unique(plansdata[plansdata[,bname]==0, "IssuerId"]))</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p7"><span class="s1"><span class="Apple-converted-space">  </span></span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>bset_ra&lt;-data.frame(racount=rep(NA, length(benefitsets)))</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>rownames(bset_ra) &lt;- names(plansdata)[grep("bset", names(plansdata))]</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>for (bname in rownames(bset_ra)) {</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">    </span>bset_ra[bname, "racount"]&lt;-length(unique(plansdata[plansdata[,bname]==1, "RatingAreaId"]))</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p7"><span class="s1"><span class="Apple-converted-space">  </span></span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>bset_ra_not&lt;-data.frame(racount=rep(NA, length(benefitsets)))</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>rownames(bset_ra_not) &lt;- names(plansdata)[grep("bset", names(plansdata))]</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>for (bname in rownames(bset_ra_not)) {</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">    </span>bset_ra_not[bname, "racount"]&lt;-length(unique(plansdata[plansdata[,bname]==0, "RatingAreaId"]))</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>}</span></p>
+<p class="p7"><span class="s1"><span class="Apple-converted-space">  </span></span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>goodbsets&lt;-intersect(rownames(bset_issuer_not)[bset_issuer_not$issuercount&gt;1], rownames(bset_issuer)[bset_issuer$issuercount&gt;1])</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">  </span>goodbsets</span></p>
+<p class="p5"><span class="s1">}</span></p>
+<p class="p5"><span class="s1">txsets&lt;-getGoodSets(txbenefits, txpremiumsplus)</span></p>
+<p class="p5"><span class="s1">scsets&lt;-getGoodSets(scbenefits, scpremiumsplus)</span></p>
+<p class="p5"><span class="s1">pasets&lt;-getGoodSets(pabenefits, papremiumsplus)</span></p>
+<p class="p4"><span class="s1">The benefit set variables are labeled 1…n in each state, but they aren’t the same benefits:</span></p>
+<p class="p5"><span class="s1">txbenefits[[14]]</span></p>
+<p class="p8"><span class="s1">## [1] "adultvisionframesorlenses"</span></p>
+<p class="p5"><span class="s1">scbenefits[[14]]</span></p>
+<p class="p8"><span class="s1">## [1] "diabeteseducation"</span></p>
+<p class="p5"><span class="s1">pabenefits[[14]]</span></p>
+<p class="p8"><span class="s1">## [1] "acupuncture"</span></p>
+<h2 style="margin: 0.0px 0.0px 10.0px 0.0px; line-height: 33.0px; font: 30.0px 'Helvetica Neue'; color: #333333; -webkit-text-stroke: #333333"><span class="s1">State Models</span></h2>
+<p class="p4"><span class="s1">Without any benefit sets, deductibles, etc:</span></p>
+<p class="p5"><span class="s1">summary(lm(IndividualRate ~ -1 + factor(BusinessYear)*MetalLevel + RatingAreaId + factor(IssuerId) + PlanType,<span class="Apple-converted-space"> </span></span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">           </span>data=txpremiumsplus))</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Call:</span></p>
+<p class="p8"><span class="s1">## lm(formula = IndividualRate ~ -1 + factor(BusinessYear) * MetalLevel +<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">    </span>RatingAreaId + factor(IssuerId) + PlanType, data = txpremiumsplus)</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Residuals:</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space">      </span>Min <span class="Apple-converted-space">      </span>1Q <span class="Apple-converted-space">  </span>Median <span class="Apple-converted-space">      </span>3Q<span class="Apple-converted-space">      </span>Max<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## -149.068<span class="Apple-converted-space">  </span>-22.246 <span class="Apple-converted-space">  </span>-2.291 <span class="Apple-converted-space">  </span>19.190<span class="Apple-converted-space">  </span>274.605<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Coefficients:</span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">                                            </span>Estimate Std. Error t value Pr(&gt;|t|) <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2014<span class="Apple-converted-space">                    </span>124.3279 <span class="Apple-converted-space">    </span>9.8167<span class="Apple-converted-space">  </span>12.665<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015<span class="Apple-converted-space">                    </span>161.0088<span class="Apple-converted-space">    </span>10.1963<span class="Apple-converted-space">  </span>15.791<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016<span class="Apple-converted-space">                    </span>193.3139 <span class="Apple-converted-space">    </span>9.8672<span class="Apple-converted-space">  </span>19.592<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelBronze <span class="Apple-converted-space">                            </span>49.6035 <span class="Apple-converted-space">    </span>4.9485<span class="Apple-converted-space">  </span>10.024<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelSilver<span class="Apple-converted-space">                            </span>112.8443 <span class="Apple-converted-space">    </span>4.9189<span class="Apple-converted-space">  </span>22.941<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelGold<span class="Apple-converted-space">                              </span>160.8827 <span class="Apple-converted-space">    </span>5.0284<span class="Apple-converted-space">  </span>31.995<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelPlatinum<span class="Apple-converted-space">                          </span>146.8947<span class="Apple-converted-space">    </span>13.6926<span class="Apple-converted-space">  </span>10.728<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 10 <span class="Apple-converted-space">                  </span>-9.3602 <span class="Apple-converted-space">    </span>3.9802<span class="Apple-converted-space">  </span>-2.352 0.018726 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 11<span class="Apple-converted-space">                  </span>-19.4798 <span class="Apple-converted-space">    </span>3.8614<span class="Apple-converted-space">  </span>-5.045 4.70e-07 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 12<span class="Apple-converted-space">                  </span>-31.5247 <span class="Apple-converted-space">    </span>4.5988<span class="Apple-converted-space">  </span>-6.855 7.98e-12 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 13<span class="Apple-converted-space">                  </span>-11.1816 <span class="Apple-converted-space">    </span>4.6072<span class="Apple-converted-space">  </span>-2.427 0.015259 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 14<span class="Apple-converted-space">                    </span>0.0215 <span class="Apple-converted-space">    </span>4.2492 <span class="Apple-converted-space">  </span>0.005 0.995963 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 15<span class="Apple-converted-space">                  </span>-64.0772 <span class="Apple-converted-space">    </span>4.1034 -15.616<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 16<span class="Apple-converted-space">                  </span>-11.5470 <span class="Apple-converted-space">    </span>4.3130<span class="Apple-converted-space">  </span>-2.677 0.007447 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 17<span class="Apple-converted-space">                  </span>-20.8147 <span class="Apple-converted-space">    </span>4.3130<span class="Apple-converted-space">  </span>-4.826 1.43e-06 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 18<span class="Apple-converted-space">                    </span>4.0710 <span class="Apple-converted-space">    </span>4.3813 <span class="Apple-converted-space">  </span>0.929 0.352835 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 19<span class="Apple-converted-space">                  </span>-34.6532 <span class="Apple-converted-space">    </span>3.9432<span class="Apple-converted-space">  </span>-8.788<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 2 <span class="Apple-converted-space">                  </span>-13.4893 <span class="Apple-converted-space">    </span>4.2875<span class="Apple-converted-space">  </span>-3.146 0.001664 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 20 <span class="Apple-converted-space">                  </span>32.3769 <span class="Apple-converted-space">    </span>4.5034 <span class="Apple-converted-space">  </span>7.190 7.45e-13 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 21<span class="Apple-converted-space">                  </span>-16.8630 <span class="Apple-converted-space">    </span>4.6499<span class="Apple-converted-space">  </span>-3.626 0.000290 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 22<span class="Apple-converted-space">                  </span>-14.0357 <span class="Apple-converted-space">    </span>4.6072<span class="Apple-converted-space">  </span>-3.046 0.002327 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 23 <span class="Apple-converted-space">                  </span>-7.6730 <span class="Apple-converted-space">    </span>4.6499<span class="Apple-converted-space">  </span>-1.650 0.098980 . <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 24<span class="Apple-converted-space">                  </span>-21.1758 <span class="Apple-converted-space">    </span>3.8228<span class="Apple-converted-space">  </span>-5.539 3.19e-08 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 25 <span class="Apple-converted-space">                  </span>38.0346 <span class="Apple-converted-space">    </span>4.7129 <span class="Apple-converted-space">  </span>8.070 8.68e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 26 <span class="Apple-converted-space">                  </span>-5.5867 <span class="Apple-converted-space">    </span>3.6806<span class="Apple-converted-space">  </span>-1.518 0.129114 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 3 <span class="Apple-converted-space">                  </span>-16.6087 <span class="Apple-converted-space">    </span>3.8490<span class="Apple-converted-space">  </span>-4.315 1.63e-05 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 4<span class="Apple-converted-space">                    </span>15.8173 <span class="Apple-converted-space">    </span>4.3038 <span class="Apple-converted-space">  </span>3.675 0.000240 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 5 <span class="Apple-converted-space">                  </span>-46.5979 <span class="Apple-converted-space">    </span>4.0526 -11.498<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 6<span class="Apple-converted-space">                    </span>-5.3848 <span class="Apple-converted-space">    </span>4.0596<span class="Apple-converted-space">  </span>-1.326 0.184749 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 7 <span class="Apple-converted-space">                  </span>-31.4474 <span class="Apple-converted-space">    </span>4.2687<span class="Apple-converted-space">  </span>-7.367 2.03e-13 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 8<span class="Apple-converted-space">                    </span>16.9868 <span class="Apple-converted-space">    </span>4.0512 <span class="Apple-converted-space">  </span>4.193 2.80e-05 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 9 <span class="Apple-converted-space">                  </span>-27.4609 <span class="Apple-converted-space">    </span>4.0566<span class="Apple-converted-space">  </span>-6.769 1.44e-11 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)26539<span class="Apple-converted-space">                        </span>43.2305 <span class="Apple-converted-space">    </span>9.9008 <span class="Apple-converted-space">  </span>4.366 1.29e-05 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)27248 <span class="Apple-converted-space">                        </span>9.1491<span class="Apple-converted-space">    </span>12.0980 <span class="Apple-converted-space">  </span>0.756 0.449532 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)28020<span class="Apple-converted-space">                        </span>78.3150<span class="Apple-converted-space">    </span>10.0952 <span class="Apple-converted-space">  </span>7.758 1.04e-14 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)29418<span class="Apple-converted-space">                        </span>-8.4440 <span class="Apple-converted-space">    </span>8.9205<span class="Apple-converted-space">  </span>-0.947 0.343896 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)32673<span class="Apple-converted-space">                        </span>36.2319<span class="Apple-converted-space">    </span>10.0739 <span class="Apple-converted-space">  </span>3.597 0.000325 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)33602<span class="Apple-converted-space">                        </span>19.2425 <span class="Apple-converted-space">    </span>9.5831 <span class="Apple-converted-space">  </span>2.008 0.044701 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)37392<span class="Apple-converted-space">                        </span>23.5157<span class="Apple-converted-space">    </span>12.9555 <span class="Apple-converted-space">  </span>1.815 0.069566 . <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)37755<span class="Apple-converted-space">                        </span>-1.8113<span class="Apple-converted-space">    </span>10.6281<span class="Apple-converted-space">  </span>-0.170 0.864681 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)40788<span class="Apple-converted-space">                        </span>57.7803 <span class="Apple-converted-space">    </span>9.9486 <span class="Apple-converted-space">  </span>5.808 6.71e-09 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)45786<span class="Apple-converted-space">                        </span>38.3817<span class="Apple-converted-space">    </span>10.4358 <span class="Apple-converted-space">  </span>3.678 0.000238 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)46224<span class="Apple-converted-space">                        </span>38.7015<span class="Apple-converted-space">    </span>12.7254 <span class="Apple-converted-space">  </span>3.041 0.002368 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)55409<span class="Apple-converted-space">                        </span>16.8883 <span class="Apple-converted-space">    </span>9.9646 <span class="Apple-converted-space">  </span>1.695 0.090169 . <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)63141<span class="Apple-converted-space">                        </span>28.1906<span class="Apple-converted-space">    </span>10.2172 <span class="Apple-converted-space">  </span>2.759 0.005816 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)63509<span class="Apple-converted-space">                        </span>-2.9795<span class="Apple-converted-space">    </span>11.1713<span class="Apple-converted-space">  </span>-0.267 0.789705 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)66252 <span class="Apple-converted-space">                      </span>-14.0103<span class="Apple-converted-space">    </span>11.6616<span class="Apple-converted-space">  </span>-1.201 0.229649 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)71837<span class="Apple-converted-space">                        </span>-0.9702<span class="Apple-converted-space">    </span>13.2231<span class="Apple-converted-space">  </span>-0.073 0.941515 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)76589<span class="Apple-converted-space">                        </span>49.7128<span class="Apple-converted-space">    </span>17.4932 <span class="Apple-converted-space">  </span>2.842 0.004503 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)85947<span class="Apple-converted-space">                        </span>79.4636 <span class="Apple-converted-space">    </span>8.2107 <span class="Apple-converted-space">  </span>9.678<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)87226<span class="Apple-converted-space">                        </span>51.7939 <span class="Apple-converted-space">    </span>9.8433 <span class="Apple-converted-space">  </span>5.262 1.49e-07 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)91716<span class="Apple-converted-space">                        </span>60.4188 <span class="Apple-converted-space">    </span>9.3695 <span class="Apple-converted-space">  </span>6.448 1.24e-10 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)98809 <span class="Apple-converted-space">                      </span>121.8431 <span class="Apple-converted-space">    </span>8.4892<span class="Apple-converted-space">  </span>14.353<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## PlanTypeHMO <span class="Apple-converted-space">                                </span>-14.3876 <span class="Apple-converted-space">    </span>5.6655<span class="Apple-converted-space">  </span>-2.540 0.011130 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## PlanTypePOS<span class="Apple-converted-space">                                  </span>-7.8861 <span class="Apple-converted-space">    </span>6.6560<span class="Apple-converted-space">  </span>-1.185 0.236151 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## PlanTypePPO<span class="Apple-converted-space">                                  </span>47.0275 <span class="Apple-converted-space">    </span>5.5568 <span class="Apple-converted-space">  </span>8.463<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelBronze <span class="Apple-converted-space">  </span>-20.2045 <span class="Apple-converted-space">    </span>7.4570<span class="Apple-converted-space">  </span>-2.709 0.006762 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelBronze <span class="Apple-converted-space">  </span>-31.2014 <span class="Apple-converted-space">    </span>7.4478<span class="Apple-converted-space">  </span>-4.189 2.85e-05 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelSilver <span class="Apple-converted-space">  </span>-27.5097 <span class="Apple-converted-space">    </span>7.4115<span class="Apple-converted-space">  </span>-3.712 0.000208 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelSilver <span class="Apple-converted-space">  </span>-39.9209 <span class="Apple-converted-space">    </span>7.4261<span class="Apple-converted-space">  </span>-5.376 7.97e-08 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelGold <span class="Apple-converted-space">    </span>-13.0946 <span class="Apple-converted-space">    </span>7.5357<span class="Apple-converted-space">  </span>-1.738 0.082329 . <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelGold <span class="Apple-converted-space">    </span>-35.6636 <span class="Apple-converted-space">    </span>7.5258<span class="Apple-converted-space">  </span>-4.739 2.21e-06 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelPlatinum<span class="Apple-converted-space">  </span>34.9392<span class="Apple-converted-space">    </span>15.7323 <span class="Apple-converted-space">  </span>2.221 0.026404 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelPlatinum<span class="Apple-converted-space">  </span>70.0469<span class="Apple-converted-space">    </span>19.2391 <span class="Apple-converted-space">  </span>3.641 0.000274 ***</span></p>
+<p class="p8"><span class="s1">## ---</span></p>
+<p class="p8"><span class="s1">## Signif. codes:<span class="Apple-converted-space">  </span>0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Residual standard error: 37.85 on 5071 degrees of freedom</span></p>
+<p class="p8"><span class="s1">## Multiple R-squared:<span class="Apple-converted-space">  </span>0.9827, Adjusted R-squared:<span class="Apple-converted-space">  </span>0.9824<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## F-statistic:<span class="Apple-converted-space">  </span>4490 on 64 and 5071 DF,<span class="Apple-converted-space">  </span>p-value: &lt; 2.2e-16</span></p>
+<p class="p4"><span class="s1">Already have VERY high r-squared. Add in deductible, coinsurance, MOOP, hsa:</span></p>
+<p class="p5"><span class="s1">summary(lm(IndividualRate ~ -1 + factor(BusinessYear)*MetalLevel + RatingAreaId + factor(IssuerId) + PlanType +</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">          </span>deduct_in + moop_in + coinsurance + hsa, data=txpremiumsplus))</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Call:</span></p>
+<p class="p8"><span class="s1">## lm(formula = IndividualRate ~ -1 + factor(BusinessYear) * MetalLevel +<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">    </span>RatingAreaId + factor(IssuerId) + PlanType + deduct_in +<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">    </span>moop_in + coinsurance + hsa, data = txpremiumsplus)</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Residuals:</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space">      </span>Min <span class="Apple-converted-space">      </span>1Q <span class="Apple-converted-space">  </span>Median <span class="Apple-converted-space">      </span>3Q<span class="Apple-converted-space">      </span>Max<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## -150.989<span class="Apple-converted-space">  </span>-21.993 <span class="Apple-converted-space">  </span>-2.885 <span class="Apple-converted-space">  </span>19.336<span class="Apple-converted-space">  </span>256.073<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Coefficients:</span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">                                              </span>Estimate Std. Error t value Pr(&gt;|t|) <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2014 <span class="Apple-converted-space">                    </span>2.323e+02<span class="Apple-converted-space">  </span>1.301e+01<span class="Apple-converted-space">  </span>17.853<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015 <span class="Apple-converted-space">                    </span>2.753e+02<span class="Apple-converted-space">  </span>1.348e+01<span class="Apple-converted-space">  </span>20.416<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016 <span class="Apple-converted-space">                    </span>3.119e+02<span class="Apple-converted-space">  </span>1.351e+01<span class="Apple-converted-space">  </span>23.093<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelBronze <span class="Apple-converted-space">                            </span>4.082e+01<span class="Apple-converted-space">  </span>4.923e+00 <span class="Apple-converted-space">  </span>8.292<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelSilver <span class="Apple-converted-space">                            </span>9.394e+01<span class="Apple-converted-space">  </span>4.951e+00<span class="Apple-converted-space">  </span>18.975<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelGold <span class="Apple-converted-space">                              </span>1.065e+02<span class="Apple-converted-space">  </span>5.856e+00<span class="Apple-converted-space">  </span>18.189<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelPlatinum <span class="Apple-converted-space">                          </span>5.364e+01<span class="Apple-converted-space">  </span>1.433e+01 <span class="Apple-converted-space">  </span>3.742 0.000185 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 10<span class="Apple-converted-space">                  </span>-8.372e+00<span class="Apple-converted-space">  </span>3.848e+00<span class="Apple-converted-space">  </span>-2.176 0.029618 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 11<span class="Apple-converted-space">                  </span>-1.913e+01<span class="Apple-converted-space">  </span>3.732e+00<span class="Apple-converted-space">  </span>-5.126 3.07e-07 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 12<span class="Apple-converted-space">                  </span>-3.151e+01<span class="Apple-converted-space">  </span>4.445e+00<span class="Apple-converted-space">  </span>-7.089 1.53e-12 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 13<span class="Apple-converted-space">                  </span>-1.028e+01<span class="Apple-converted-space">  </span>4.454e+00<span class="Apple-converted-space">  </span>-2.307 0.021081 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 14 <span class="Apple-converted-space">                  </span>7.663e-01<span class="Apple-converted-space">  </span>4.107e+00 <span class="Apple-converted-space">  </span>0.187 0.852006 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 15<span class="Apple-converted-space">                  </span>-6.250e+01<span class="Apple-converted-space">  </span>3.967e+00 -15.753<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 16<span class="Apple-converted-space">                  </span>-1.155e+01<span class="Apple-converted-space">  </span>4.169e+00<span class="Apple-converted-space">  </span>-2.770 0.005628 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 17<span class="Apple-converted-space">                  </span>-2.081e+01<span class="Apple-converted-space">  </span>4.169e+00<span class="Apple-converted-space">  </span>-4.993 6.14e-07 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 18 <span class="Apple-converted-space">                  </span>4.178e+00<span class="Apple-converted-space">  </span>4.235e+00 <span class="Apple-converted-space">  </span>0.987 0.323868 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 19<span class="Apple-converted-space">                  </span>-3.343e+01<span class="Apple-converted-space">  </span>3.812e+00<span class="Apple-converted-space">  </span>-8.770<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 2 <span class="Apple-converted-space">                  </span>-1.347e+01<span class="Apple-converted-space">  </span>4.144e+00<span class="Apple-converted-space">  </span>-3.251 0.001160 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 20 <span class="Apple-converted-space">                  </span>3.250e+01<span class="Apple-converted-space">  </span>4.353e+00 <span class="Apple-converted-space">  </span>7.466 9.65e-14 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 21<span class="Apple-converted-space">                  </span>-1.692e+01<span class="Apple-converted-space">  </span>4.494e+00<span class="Apple-converted-space">  </span>-3.765 0.000169 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 22<span class="Apple-converted-space">                  </span>-1.313e+01<span class="Apple-converted-space">  </span>4.454e+00<span class="Apple-converted-space">  </span>-2.948 0.003212 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 23<span class="Apple-converted-space">                  </span>-7.730e+00<span class="Apple-converted-space">  </span>4.494e+00<span class="Apple-converted-space">  </span>-1.720 0.085531 . <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 24<span class="Apple-converted-space">                  </span>-2.078e+01<span class="Apple-converted-space">  </span>3.695e+00<span class="Apple-converted-space">  </span>-5.625 1.96e-08 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 25 <span class="Apple-converted-space">                  </span>3.795e+01<span class="Apple-converted-space">  </span>4.555e+00 <span class="Apple-converted-space">  </span>8.331<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 26<span class="Apple-converted-space">                  </span>-4.910e+00<span class="Apple-converted-space">  </span>3.558e+00<span class="Apple-converted-space">  </span>-1.380 0.167636 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 3 <span class="Apple-converted-space">                  </span>-1.549e+01<span class="Apple-converted-space">  </span>3.721e+00<span class="Apple-converted-space">  </span>-4.164 3.19e-05 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 4<span class="Apple-converted-space">                    </span>1.604e+01<span class="Apple-converted-space">  </span>4.160e+00 <span class="Apple-converted-space">  </span>3.856 0.000117 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 5 <span class="Apple-converted-space">                  </span>-4.539e+01<span class="Apple-converted-space">  </span>3.918e+00 -11.585<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 6 <span class="Apple-converted-space">                  </span>-5.360e+00<span class="Apple-converted-space">  </span>3.924e+00<span class="Apple-converted-space">  </span>-1.366 0.172043 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 7 <span class="Apple-converted-space">                  </span>-3.012e+01<span class="Apple-converted-space">  </span>4.127e+00<span class="Apple-converted-space">  </span>-7.300 3.33e-13 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 8<span class="Apple-converted-space">                    </span>1.849e+01<span class="Apple-converted-space">  </span>3.917e+00 <span class="Apple-converted-space">  </span>4.720 2.42e-06 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 9 <span class="Apple-converted-space">                  </span>-2.611e+01<span class="Apple-converted-space">  </span>3.922e+00<span class="Apple-converted-space">  </span>-6.658 3.07e-11 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)26539<span class="Apple-converted-space">                        </span>4.707e+01<span class="Apple-converted-space">  </span>1.052e+01 <span class="Apple-converted-space">  </span>4.475 7.80e-06 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)27248<span class="Apple-converted-space">                        </span>4.048e+00<span class="Apple-converted-space">  </span>1.328e+01 <span class="Apple-converted-space">  </span>0.305 0.760518 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)28020<span class="Apple-converted-space">                        </span>7.678e+01<span class="Apple-converted-space">  </span>1.064e+01 <span class="Apple-converted-space">  </span>7.216 6.14e-13 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)29418<span class="Apple-converted-space">                        </span>8.369e+00<span class="Apple-converted-space">  </span>9.721e+00 <span class="Apple-converted-space">  </span>0.861 0.389334 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)32673<span class="Apple-converted-space">                        </span>3.800e+01<span class="Apple-converted-space">  </span>1.063e+01 <span class="Apple-converted-space">  </span>3.575 0.000354 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)33602<span class="Apple-converted-space">                        </span>2.148e+01<span class="Apple-converted-space">  </span>1.026e+01 <span class="Apple-converted-space">  </span>2.094 0.036300 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)37392<span class="Apple-converted-space">                        </span>3.263e+01<span class="Apple-converted-space">  </span>1.345e+01 <span class="Apple-converted-space">  </span>2.426 0.015314 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)37755 <span class="Apple-converted-space">                      </span>-6.493e+00<span class="Apple-converted-space">  </span>1.123e+01<span class="Apple-converted-space">  </span>-0.578 0.563221 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)40788<span class="Apple-converted-space">                        </span>5.736e+01<span class="Apple-converted-space">  </span>1.072e+01 <span class="Apple-converted-space">  </span>5.350 9.19e-08 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)45786<span class="Apple-converted-space">                        </span>4.290e+01<span class="Apple-converted-space">  </span>1.107e+01 <span class="Apple-converted-space">  </span>3.875 0.000108 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)46224<span class="Apple-converted-space">                        </span>3.548e+01<span class="Apple-converted-space">  </span>1.316e+01 <span class="Apple-converted-space">  </span>2.696 0.007032 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)55409<span class="Apple-converted-space">                        </span>1.552e+01<span class="Apple-converted-space">  </span>1.059e+01 <span class="Apple-converted-space">  </span>1.466 0.142801 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)63141<span class="Apple-converted-space">                        </span>2.872e+01<span class="Apple-converted-space">  </span>1.074e+01 <span class="Apple-converted-space">  </span>2.675 0.007504 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)63509<span class="Apple-converted-space">                        </span>6.182e+00<span class="Apple-converted-space">  </span>1.158e+01 <span class="Apple-converted-space">  </span>0.534 0.593451 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)66252 <span class="Apple-converted-space">                      </span>-1.243e+01<span class="Apple-converted-space">  </span>1.195e+01<span class="Apple-converted-space">  </span>-1.040 0.298302 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)71837<span class="Apple-converted-space">                        </span>7.734e+00<span class="Apple-converted-space">  </span>1.321e+01 <span class="Apple-converted-space">  </span>0.586 0.558188 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)76589<span class="Apple-converted-space">                        </span>5.469e+01<span class="Apple-converted-space">  </span>1.740e+01 <span class="Apple-converted-space">  </span>3.144 0.001678 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)85947<span class="Apple-converted-space">                        </span>7.808e+01<span class="Apple-converted-space">  </span>9.191e+00 <span class="Apple-converted-space">  </span>8.494<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)87226<span class="Apple-converted-space">                        </span>5.721e+01<span class="Apple-converted-space">  </span>1.040e+01 <span class="Apple-converted-space">  </span>5.499 4.00e-08 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)91716<span class="Apple-converted-space">                        </span>6.901e+01<span class="Apple-converted-space">  </span>1.005e+01 <span class="Apple-converted-space">  </span>6.869 7.25e-12 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)98809<span class="Apple-converted-space">                        </span>1.166e+02<span class="Apple-converted-space">  </span>9.523e+00<span class="Apple-converted-space">  </span>12.249<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## PlanTypeHMO <span class="Apple-converted-space">                                </span>-1.383e+01<span class="Apple-converted-space">  </span>5.480e+00<span class="Apple-converted-space">  </span>-2.524 0.011632 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## PlanTypePOS <span class="Apple-converted-space">                                </span>-1.037e+01<span class="Apple-converted-space">  </span>6.441e+00<span class="Apple-converted-space">  </span>-1.610 0.107356 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## PlanTypePPO<span class="Apple-converted-space">                                  </span>4.650e+01<span class="Apple-converted-space">  </span>5.374e+00 <span class="Apple-converted-space">  </span>8.653<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## deduct_in <span class="Apple-converted-space">                                  </span>-6.254e-03<span class="Apple-converted-space">  </span>6.238e-04 -10.025<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## moop_in <span class="Apple-converted-space">                                    </span>-1.147e-02<span class="Apple-converted-space">  </span>7.615e-04 -15.059<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## coinsurance<span class="Apple-converted-space">                                  </span>8.994e-03<span class="Apple-converted-space">  </span>5.805e-02 <span class="Apple-converted-space">  </span>0.155 0.876890 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## hsa<span class="Apple-converted-space">                                          </span>3.523e+00<span class="Apple-converted-space">  </span>1.942e+00 <span class="Apple-converted-space">  </span>1.814 0.069751 . <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelBronze <span class="Apple-converted-space">  </span>-2.377e+01<span class="Apple-converted-space">  </span>7.216e+00<span class="Apple-converted-space">  </span>-3.293 0.000996 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelBronze <span class="Apple-converted-space">  </span>-3.387e+01<span class="Apple-converted-space">  </span>7.201e+00<span class="Apple-converted-space">  </span>-4.704 2.62e-06 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelSilver <span class="Apple-converted-space">  </span>-3.524e+01<span class="Apple-converted-space">  </span>7.178e+00<span class="Apple-converted-space">  </span>-4.909 9.46e-07 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelSilver <span class="Apple-converted-space">  </span>-5.139e+01<span class="Apple-converted-space">  </span>7.210e+00<span class="Apple-converted-space">  </span>-7.127 1.17e-12 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelGold <span class="Apple-converted-space">    </span>-1.843e+01<span class="Apple-converted-space">  </span>7.291e+00<span class="Apple-converted-space">  </span>-2.528 0.011502 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelGold <span class="Apple-converted-space">    </span>-4.017e+01<span class="Apple-converted-space">  </span>7.290e+00<span class="Apple-converted-space">  </span>-5.510 3.77e-08 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelPlatinum<span class="Apple-converted-space">  </span>3.473e+01<span class="Apple-converted-space">  </span>1.521e+01 <span class="Apple-converted-space">  </span>2.283 0.022475 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelPlatinum<span class="Apple-converted-space">  </span>5.849e+01<span class="Apple-converted-space">  </span>1.861e+01 <span class="Apple-converted-space">  </span>3.142 0.001685 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## ---</span></p>
+<p class="p8"><span class="s1">## Signif. codes:<span class="Apple-converted-space">  </span>0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Residual standard error: 36.58 on 5067 degrees of freedom</span></p>
+<p class="p8"><span class="s1">## Multiple R-squared:<span class="Apple-converted-space">  </span>0.9838, Adjusted R-squared:<span class="Apple-converted-space">  </span>0.9836<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## F-statistic:<span class="Apple-converted-space">  </span>4529 on 68 and 5067 DF,<span class="Apple-converted-space">  </span>p-value: &lt; 2.2e-16</span></p>
+<p class="p4"><span class="s1">Now add in benefit sets:</span></p>
+<h3 style="margin: 0.0px 0.0px 10.0px 0.0px; line-height: 26.0px; font: 24.0px 'Helvetica Neue'; color: #333333; -webkit-text-stroke: #333333"><span class="s1">Texas</span></h3>
+<p class="p5"><span class="s1">summary(txreg&lt;-lm(as.formula(paste("IndividualRate ~ -1 + factor(BusinessYear)*MetalLevel+RatingAreaId+factor(IssuerId)+",</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">                           </span>"PlanType + deduct_in + moop_in + coinsurance + hsa + ",</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">                           </span>paste(txsets, collapse="+"))), data=txpremiumsplus))</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Call:</span></p>
+<p class="p8"><span class="s1">## lm(formula = as.formula(paste("IndividualRate ~ -1 + factor(BusinessYear)*MetalLevel+RatingAreaId+factor(IssuerId)+",<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">    </span>"PlanType + deduct_in + moop_in + coinsurance + hsa + ",<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">    </span>paste(txsets, collapse = "+"))), data = txpremiumsplus)</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Residuals:</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space">      </span>Min <span class="Apple-converted-space">      </span>1Q <span class="Apple-converted-space">  </span>Median <span class="Apple-converted-space">      </span>3Q<span class="Apple-converted-space">      </span>Max<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## -127.961<span class="Apple-converted-space">  </span>-15.686 <span class="Apple-converted-space">  </span>-1.007 <span class="Apple-converted-space">  </span>14.301<span class="Apple-converted-space">  </span>212.205<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Coefficients: (11 not defined because of singularities)</span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">                                              </span>Estimate Std. Error t value Pr(&gt;|t|) <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2014<span class="Apple-converted-space">                    </span>-1.757e+02<span class="Apple-converted-space">  </span>2.891e+01<span class="Apple-converted-space">  </span>-6.077 1.32e-09 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015<span class="Apple-converted-space">                    </span>-1.308e+02<span class="Apple-converted-space">  </span>2.906e+01<span class="Apple-converted-space">  </span>-4.499 6.97e-06 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016<span class="Apple-converted-space">                    </span>-1.292e+02<span class="Apple-converted-space">  </span>2.912e+01<span class="Apple-converted-space">  </span>-4.437 9.31e-06 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelBronze <span class="Apple-converted-space">                            </span>3.946e+01<span class="Apple-converted-space">  </span>3.999e+00 <span class="Apple-converted-space">  </span>9.869<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelSilver <span class="Apple-converted-space">                            </span>9.164e+01<span class="Apple-converted-space">  </span>3.990e+00<span class="Apple-converted-space">  </span>22.967<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelGold <span class="Apple-converted-space">                              </span>1.244e+02<span class="Apple-converted-space">  </span>4.705e+00<span class="Apple-converted-space">  </span>26.440<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelPlatinum <span class="Apple-converted-space">                          </span>1.133e+02<span class="Apple-converted-space">  </span>1.173e+01 <span class="Apple-converted-space">  </span>9.655<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 10<span class="Apple-converted-space">                  </span>-4.531e-01<span class="Apple-converted-space">  </span>2.977e+00<span class="Apple-converted-space">  </span>-0.152 0.879038 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 11<span class="Apple-converted-space">                  </span>-1.696e+01<span class="Apple-converted-space">  </span>2.883e+00<span class="Apple-converted-space">  </span>-5.885 4.24e-09 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 12<span class="Apple-converted-space">                  </span>-3.142e+01<span class="Apple-converted-space">  </span>3.431e+00<span class="Apple-converted-space">  </span>-9.158<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 13<span class="Apple-converted-space">                  </span>-6.418e+00<span class="Apple-converted-space">  </span>3.441e+00<span class="Apple-converted-space">  </span>-1.865 0.062220 . <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 14 <span class="Apple-converted-space">                  </span>4.047e+00<span class="Apple-converted-space">  </span>3.173e+00 <span class="Apple-converted-space">  </span>1.275 0.202199 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 15<span class="Apple-converted-space">                  </span>-5.089e+01<span class="Apple-converted-space">  </span>3.087e+00 -16.484<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 16<span class="Apple-converted-space">                  </span>-1.155e+01<span class="Apple-converted-space">  </span>3.218e+00<span class="Apple-converted-space">  </span>-3.588 0.000336 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 17<span class="Apple-converted-space">                  </span>-2.081e+01<span class="Apple-converted-space">  </span>3.218e+00<span class="Apple-converted-space">  </span>-6.468 1.09e-10 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 18 <span class="Apple-converted-space">                  </span>4.852e+00<span class="Apple-converted-space">  </span>3.269e+00 <span class="Apple-converted-space">  </span>1.484 0.137823 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 19<span class="Apple-converted-space">                  </span>-2.599e+01<span class="Apple-converted-space">  </span>2.952e+00<span class="Apple-converted-space">  </span>-8.804<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 2 <span class="Apple-converted-space">                  </span>-1.334e+01<span class="Apple-converted-space">  </span>3.199e+00<span class="Apple-converted-space">  </span>-4.169 3.11e-05 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 20 <span class="Apple-converted-space">                  </span>3.355e+01<span class="Apple-converted-space">  </span>3.361e+00 <span class="Apple-converted-space">  </span>9.983<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 21<span class="Apple-converted-space">                  </span>-1.725e+01<span class="Apple-converted-space">  </span>3.469e+00<span class="Apple-converted-space">  </span>-4.973 6.82e-07 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 22<span class="Apple-converted-space">                  </span>-9.272e+00<span class="Apple-converted-space">  </span>3.441e+00<span class="Apple-converted-space">  </span>-2.695 0.007071 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 23<span class="Apple-converted-space">                  </span>-8.063e+00<span class="Apple-converted-space">  </span>3.469e+00<span class="Apple-converted-space">  </span>-2.324 0.020166 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 24<span class="Apple-converted-space">                  </span>-1.840e+01<span class="Apple-converted-space">  </span>2.855e+00<span class="Apple-converted-space">  </span>-6.446 1.25e-10 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 25 <span class="Apple-converted-space">                  </span>3.743e+01<span class="Apple-converted-space">  </span>3.516e+00<span class="Apple-converted-space">  </span>10.643<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 26<span class="Apple-converted-space">                  </span>-5.761e-01<span class="Apple-converted-space">  </span>2.751e+00<span class="Apple-converted-space">  </span>-0.209 0.834166 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 3 <span class="Apple-converted-space">                  </span>-8.342e+00<span class="Apple-converted-space">  </span>2.878e+00<span class="Apple-converted-space">  </span>-2.899 0.003762 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 4<span class="Apple-converted-space">                    </span>1.818e+01<span class="Apple-converted-space">  </span>3.214e+00 <span class="Apple-converted-space">  </span>5.656 1.63e-08 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 5 <span class="Apple-converted-space">                  </span>-3.795e+01<span class="Apple-converted-space">  </span>3.032e+00 -12.518<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 6 <span class="Apple-converted-space">                  </span>-4.238e+00<span class="Apple-converted-space">  </span>3.029e+00<span class="Apple-converted-space">  </span>-1.399 0.161904 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 7 <span class="Apple-converted-space">                  </span>-2.213e+01<span class="Apple-converted-space">  </span>3.194e+00<span class="Apple-converted-space">  </span>-6.929 4.77e-12 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 8<span class="Apple-converted-space">                    </span>2.475e+01<span class="Apple-converted-space">  </span>3.036e+00 <span class="Apple-converted-space">  </span>8.151 4.52e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 9 <span class="Apple-converted-space">                  </span>-1.872e+01<span class="Apple-converted-space">  </span>3.032e+00<span class="Apple-converted-space">  </span>-6.172 7.25e-10 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)26539 <span class="Apple-converted-space">                      </span>-8.853e+02<span class="Apple-converted-space">  </span>9.130e+01<span class="Apple-converted-space">  </span>-9.696<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)27248 <span class="Apple-converted-space">                      </span>-1.442e+02<span class="Apple-converted-space">  </span>4.046e+01<span class="Apple-converted-space">  </span>-3.565 0.000367 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)28020 <span class="Apple-converted-space">                      </span>-9.457e+01<span class="Apple-converted-space">  </span>4.999e+01<span class="Apple-converted-space">  </span>-1.892 0.058564 . <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)29418 <span class="Apple-converted-space">                      </span>-2.510e+02<span class="Apple-converted-space">  </span>3.121e+01<span class="Apple-converted-space">  </span>-8.044 1.08e-15 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)32673 <span class="Apple-converted-space">                      </span>-2.394e+02<span class="Apple-converted-space">  </span>3.521e+01<span class="Apple-converted-space">  </span>-6.799 1.17e-11 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)33602 <span class="Apple-converted-space">                      </span>-4.690e+02<span class="Apple-converted-space">  </span>3.838e+01 -12.220<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)37392 <span class="Apple-converted-space">                      </span>-1.362e+02<span class="Apple-converted-space">  </span>1.931e+01<span class="Apple-converted-space">  </span>-7.054 1.98e-12 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)37755 <span class="Apple-converted-space">                      </span>-2.843e+02<span class="Apple-converted-space">  </span>3.492e+01<span class="Apple-converted-space">  </span>-8.141 4.91e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)40788 <span class="Apple-converted-space">                      </span>-1.928e+02<span class="Apple-converted-space">  </span>3.435e+01<span class="Apple-converted-space">  </span>-5.613 2.10e-08 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)45786 <span class="Apple-converted-space">                      </span>-3.423e+02<span class="Apple-converted-space">  </span>3.213e+01 -10.653<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)46224 <span class="Apple-converted-space">                      </span>-1.611e+02<span class="Apple-converted-space">  </span>2.970e+01<span class="Apple-converted-space">  </span>-5.427 6.01e-08 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)55409<span class="Apple-converted-space">                        </span>2.444e+02<span class="Apple-converted-space">  </span>5.439e+01 <span class="Apple-converted-space">  </span>4.492 7.20e-06 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)63141 <span class="Apple-converted-space">                      </span>-2.151e+02<span class="Apple-converted-space">  </span>3.407e+01<span class="Apple-converted-space">  </span>-6.312 2.99e-10 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)63509<span class="Apple-converted-space">                        </span>2.477e+02<span class="Apple-converted-space">  </span>2.040e+01<span class="Apple-converted-space">  </span>12.144<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)66252<span class="Apple-converted-space">                        </span>6.473e+01<span class="Apple-converted-space">  </span>4.463e+01 <span class="Apple-converted-space">  </span>1.450 0.146994 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)71837 <span class="Apple-converted-space">                      </span>-5.638e+02<span class="Apple-converted-space">  </span>4.712e+01 -11.964<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)76589<span class="Apple-converted-space">                        </span>1.269e+02<span class="Apple-converted-space">  </span>5.808e+01 <span class="Apple-converted-space">  </span>2.184 0.028992 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)85947<span class="Apple-converted-space">                        </span>1.465e+02<span class="Apple-converted-space">  </span>1.629e+01 <span class="Apple-converted-space">  </span>8.997<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)87226 <span class="Apple-converted-space">                      </span>-3.319e+02<span class="Apple-converted-space">  </span>3.581e+01<span class="Apple-converted-space">  </span>-9.269<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)91716<span class="Apple-converted-space">                        </span>3.797e+02<span class="Apple-converted-space">  </span>3.041e+01<span class="Apple-converted-space">  </span>12.487<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)98809<span class="Apple-converted-space">                        </span>9.006e+01<span class="Apple-converted-space">  </span>1.670e+01 <span class="Apple-converted-space">  </span>5.393 7.25e-08 ***</span></p>
+<p class="p8"><span class="s1">## PlanTypeHMO<span class="Apple-converted-space">                                  </span>8.602e+01<span class="Apple-converted-space">  </span>8.138e+00<span class="Apple-converted-space">  </span>10.570<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## PlanTypePOS<span class="Apple-converted-space">                                  </span>1.287e+02<span class="Apple-converted-space">  </span>8.835e+00<span class="Apple-converted-space">  </span>14.569<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## PlanTypePPO<span class="Apple-converted-space">                                  </span>1.576e+02<span class="Apple-converted-space">  </span>8.171e+00<span class="Apple-converted-space">  </span>19.293<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## deduct_in <span class="Apple-converted-space">                                  </span>-3.639e-03<span class="Apple-converted-space">  </span>4.904e-04<span class="Apple-converted-space">  </span>-7.422 1.35e-13 ***</span></p>
+<p class="p8"><span class="s1">## moop_in <span class="Apple-converted-space">                                    </span>-4.090e-03<span class="Apple-converted-space">  </span>6.239e-04<span class="Apple-converted-space">  </span>-6.555 6.11e-11 ***</span></p>
+<p class="p8"><span class="s1">## coinsurance<span class="Apple-converted-space">                                  </span>2.637e-02<span class="Apple-converted-space">  </span>4.597e-02 <span class="Apple-converted-space">  </span>0.574 0.566279 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## hsa <span class="Apple-converted-space">                                        </span>-1.513e+01<span class="Apple-converted-space">  </span>1.571e+00<span class="Apple-converted-space">  </span>-9.632<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## bset1<span class="Apple-converted-space">                                        </span>3.421e+02<span class="Apple-converted-space">  </span>2.696e+01<span class="Apple-converted-space">  </span>12.686<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## bset2<span class="Apple-converted-space">                                        </span>2.100e+01<span class="Apple-converted-space">  </span>3.447e+01 <span class="Apple-converted-space">  </span>0.609 0.542375 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset3<span class="Apple-converted-space">                                        </span>4.245e+02<span class="Apple-converted-space">  </span>5.715e+01 <span class="Apple-converted-space">  </span>7.428 1.29e-13 ***</span></p>
+<p class="p8"><span class="s1">## bset4<span class="Apple-converted-space">                                        </span>3.108e+01<span class="Apple-converted-space">  </span>4.565e+01 <span class="Apple-converted-space">  </span>0.681 0.496100 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset5 <span class="Apple-converted-space">                                      </span>-3.553e+02<span class="Apple-converted-space">  </span>5.735e+01<span class="Apple-converted-space">  </span>-6.196 6.27e-10 ***</span></p>
+<p class="p8"><span class="s1">## bset6 <span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset7<span class="Apple-converted-space">                                        </span>2.863e+01<span class="Apple-converted-space">  </span>8.566e+00 <span class="Apple-converted-space">  </span>3.342 0.000837 ***</span></p>
+<p class="p8"><span class="s1">## bset8<span class="Apple-converted-space">                                        </span>1.555e+02<span class="Apple-converted-space">  </span>1.370e+01<span class="Apple-converted-space">  </span>11.352<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## bset9 <span class="Apple-converted-space">                                      </span>-4.307e+00<span class="Apple-converted-space">  </span>1.633e+01<span class="Apple-converted-space">  </span>-0.264 0.791984 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset11 <span class="Apple-converted-space">                                      </span>1.768e+02<span class="Apple-converted-space">  </span>1.401e+01<span class="Apple-converted-space">  </span>12.626<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## bset12<span class="Apple-converted-space">                                      </span>-8.451e+01<span class="Apple-converted-space">  </span>6.021e+00 -14.035<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## bset16<span class="Apple-converted-space">                                      </span>-1.599e+02<span class="Apple-converted-space">  </span>1.390e+01 -11.503<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## bset17<span class="Apple-converted-space">                                      </span>-8.256e+01<span class="Apple-converted-space">  </span>2.532e+01<span class="Apple-converted-space">  </span>-3.261 0.001116 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## bset19 <span class="Apple-converted-space">                                      </span>4.001e+01<span class="Apple-converted-space">  </span>4.263e+00 <span class="Apple-converted-space">  </span>9.385<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## bset20<span class="Apple-converted-space">                                      </span>-8.222e+00<span class="Apple-converted-space">  </span>1.647e+01<span class="Apple-converted-space">  </span>-0.499 0.617694 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset22 <span class="Apple-converted-space">                                      </span>5.930e+01<span class="Apple-converted-space">  </span>4.736e+00<span class="Apple-converted-space">  </span>12.520<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## bset23<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset24<span class="Apple-converted-space">                                      </span>-4.475e+01<span class="Apple-converted-space">  </span>2.467e+01<span class="Apple-converted-space">  </span>-1.814 0.069723 . <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## bset26 <span class="Apple-converted-space">                                      </span>1.054e+02<span class="Apple-converted-space">  </span>1.328e+01 <span class="Apple-converted-space">  </span>7.940 2.48e-15 ***</span></p>
+<p class="p8"><span class="s1">## bset27<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset30 <span class="Apple-converted-space">                                      </span>1.749e+02<span class="Apple-converted-space">  </span>4.250e+00<span class="Apple-converted-space">  </span>41.147<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## bset34 <span class="Apple-converted-space">                                      </span>2.954e+01<span class="Apple-converted-space">  </span>8.379e+00 <span class="Apple-converted-space">  </span>3.525 0.000427 ***</span></p>
+<p class="p8"><span class="s1">## bset35<span class="Apple-converted-space">                                      </span>-9.705e+00<span class="Apple-converted-space">  </span>1.605e+00<span class="Apple-converted-space">  </span>-6.047 1.58e-09 ***</span></p>
+<p class="p8"><span class="s1">## bset36 <span class="Apple-converted-space">                                      </span>5.790e+01<span class="Apple-converted-space">  </span>9.419e+00 <span class="Apple-converted-space">  </span>6.147 8.53e-10 ***</span></p>
+<p class="p8"><span class="s1">## bset37<span class="Apple-converted-space">                                      </span>-1.118e+02<span class="Apple-converted-space">  </span>1.450e+01<span class="Apple-converted-space">  </span>-7.708 1.53e-14 ***</span></p>
+<p class="p8"><span class="s1">## bset38<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset40 <span class="Apple-converted-space">                                      </span>1.140e+01<span class="Apple-converted-space">  </span>2.402e+00 <span class="Apple-converted-space">  </span>4.746 2.13e-06 ***</span></p>
+<p class="p8"><span class="s1">## bset44<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset45 <span class="Apple-converted-space">                                      </span>1.322e+02<span class="Apple-converted-space">  </span>1.423e+01 <span class="Apple-converted-space">  </span>9.295<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## bset47<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset48<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset49<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset51<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset53 <span class="Apple-converted-space">                                      </span>1.781e+01<span class="Apple-converted-space">  </span>2.424e+00 <span class="Apple-converted-space">  </span>7.348 2.33e-13 ***</span></p>
+<p class="p8"><span class="s1">## bset54<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset57<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset59 <span class="Apple-converted-space">                                      </span>1.460e+02<span class="Apple-converted-space">  </span>1.758e+01 <span class="Apple-converted-space">  </span>8.302<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelBronze <span class="Apple-converted-space">  </span>-1.617e+01<span class="Apple-converted-space">  </span>5.782e+00<span class="Apple-converted-space">  </span>-2.797 0.005176 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelBronze <span class="Apple-converted-space">  </span>-6.573e+00<span class="Apple-converted-space">  </span>5.774e+00<span class="Apple-converted-space">  </span>-1.138 0.255038 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelSilver <span class="Apple-converted-space">  </span>-2.069e+01<span class="Apple-converted-space">  </span>5.772e+00<span class="Apple-converted-space">  </span>-3.584 0.000341 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelSilver <span class="Apple-converted-space">  </span>-1.449e+01<span class="Apple-converted-space">  </span>5.810e+00<span class="Apple-converted-space">  </span>-2.495 0.012639 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelGold <span class="Apple-converted-space">    </span>-1.114e+01<span class="Apple-converted-space">  </span>5.870e+00<span class="Apple-converted-space">  </span>-1.897 0.057825 . <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelGold <span class="Apple-converted-space">    </span>-1.219e+01<span class="Apple-converted-space">  </span>5.891e+00<span class="Apple-converted-space">  </span>-2.069 0.038554 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelPlatinum<span class="Apple-converted-space">  </span>2.216e+01<span class="Apple-converted-space">  </span>1.245e+01 <span class="Apple-converted-space">  </span>1.780 0.075217 . <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelPlatinum<span class="Apple-converted-space">  </span>4.816e+01<span class="Apple-converted-space">  </span>1.528e+01 <span class="Apple-converted-space">  </span>3.151 0.001637 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## ---</span></p>
+<p class="p8"><span class="s1">## Signif. codes:<span class="Apple-converted-space">  </span>0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Residual standard error: 28.24 on 5041 degrees of freedom</span></p>
+<p class="p8"><span class="s1">## Multiple R-squared:<span class="Apple-converted-space">  </span>0.9904, Adjusted R-squared:<span class="Apple-converted-space">  </span>0.9902<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## F-statistic:<span class="Apple-converted-space">  </span>5535 on 94 and 5041 DF,<span class="Apple-converted-space">  </span>p-value: &lt; 2.2e-16</span></p>
+<p class="p4"><span class="s1">We still lost a number of benefit sets, but some remain.</span></p>
+<p class="p4"><span class="s1">Other states:</span></p>
+<h3 style="margin: 0.0px 0.0px 10.0px 0.0px; line-height: 26.0px; font: 24.0px 'Helvetica Neue'; color: #333333; -webkit-text-stroke: #333333"><span class="s1">South Carolina</span></h3>
+<p class="p5"><span class="s1">summary(screg&lt;-lm(as.formula(paste("IndividualRate ~ -1 + factor(BusinessYear)*MetalLevel+RatingAreaId+factor(IssuerId)+",</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">                           </span>"PlanType + deduct_in + moop_in + coinsurance + hsa + ",</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">                           </span>paste(scsets, collapse="+"))), data=scpremiumsplus))</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Call:</span></p>
+<p class="p8"><span class="s1">## lm(formula = as.formula(paste("IndividualRate ~ -1 + factor(BusinessYear)*MetalLevel+RatingAreaId+factor(IssuerId)+",<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">    </span>"PlanType + deduct_in + moop_in + coinsurance + hsa + ",<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">    </span>paste(scsets, collapse = "+"))), data = scpremiumsplus)</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Residuals:</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space">      </span>Min <span class="Apple-converted-space">      </span>1Q <span class="Apple-converted-space">  </span>Median <span class="Apple-converted-space">      </span>3Q<span class="Apple-converted-space">      </span>Max<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## -117.337<span class="Apple-converted-space">  </span>-13.204<span class="Apple-converted-space">    </span>0.904 <span class="Apple-converted-space">  </span>12.212<span class="Apple-converted-space">  </span>307.581<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Coefficients: (6 not defined because of singularities)</span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">                                              </span>Estimate Std. Error t value Pr(&gt;|t|) <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2014 <span class="Apple-converted-space">                    </span>2.251e+02<span class="Apple-converted-space">  </span>1.863e+01<span class="Apple-converted-space">  </span>12.084<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015 <span class="Apple-converted-space">                    </span>2.377e+02<span class="Apple-converted-space">  </span>1.220e+01<span class="Apple-converted-space">  </span>19.488<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016 <span class="Apple-converted-space">                    </span>2.504e+02<span class="Apple-converted-space">  </span>2.908e+01 <span class="Apple-converted-space">  </span>8.610<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelBronze <span class="Apple-converted-space">                            </span>2.452e+01<span class="Apple-converted-space">  </span>3.057e+00 <span class="Apple-converted-space">  </span>8.020 1.16e-15 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelSilver <span class="Apple-converted-space">                            </span>5.513e+01<span class="Apple-converted-space">  </span>3.035e+00<span class="Apple-converted-space">  </span>18.164<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelGold <span class="Apple-converted-space">                              </span>1.038e+02<span class="Apple-converted-space">  </span>3.499e+00<span class="Apple-converted-space">  </span>29.672<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelPlatinum <span class="Apple-converted-space">                          </span>2.017e+02<span class="Apple-converted-space">  </span>6.028e+00<span class="Apple-converted-space">  </span>33.464<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 10<span class="Apple-converted-space">                  </span>-3.102e+01<span class="Apple-converted-space">  </span>2.825e+00 -10.978<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 11<span class="Apple-converted-space">                  </span>-2.703e+01<span class="Apple-converted-space">  </span>2.871e+00<span class="Apple-converted-space">  </span>-9.416<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 12<span class="Apple-converted-space">                  </span>-1.251e+01<span class="Apple-converted-space">  </span>2.871e+00<span class="Apple-converted-space">  </span>-4.357 1.33e-05 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 13<span class="Apple-converted-space">                  </span>-2.164e+01<span class="Apple-converted-space">  </span>2.871e+00<span class="Apple-converted-space">  </span>-7.536 5.21e-14 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 14<span class="Apple-converted-space">                  </span>-3.267e+01<span class="Apple-converted-space">  </span>2.871e+00 -11.377<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 15<span class="Apple-converted-space">                  </span>-9.957e+00<span class="Apple-converted-space">  </span>2.871e+00<span class="Apple-converted-space">  </span>-3.468 0.000526 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 16<span class="Apple-converted-space">                  </span>-1.199e+01<span class="Apple-converted-space">  </span>2.850e+00<span class="Apple-converted-space">  </span>-4.208 2.60e-05 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 17<span class="Apple-converted-space">                  </span>-1.972e+00<span class="Apple-converted-space">  </span>2.871e+00<span class="Apple-converted-space">  </span>-0.687 0.492251 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 18<span class="Apple-converted-space">                  </span>-2.073e+01<span class="Apple-converted-space">  </span>2.825e+00<span class="Apple-converted-space">  </span>-7.338 2.32e-13 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 19<span class="Apple-converted-space">                  </span>-9.822e+00<span class="Apple-converted-space">  </span>2.871e+00<span class="Apple-converted-space">  </span>-3.421 0.000626 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 2 <span class="Apple-converted-space">                  </span>-1.661e+00<span class="Apple-converted-space">  </span>2.850e+00<span class="Apple-converted-space">  </span>-0.583 0.559904 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 20<span class="Apple-converted-space">                  </span>-2.932e+01<span class="Apple-converted-space">  </span>2.825e+00 -10.377<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 21<span class="Apple-converted-space">                  </span>-1.397e+01<span class="Apple-converted-space">  </span>2.807e+00<span class="Apple-converted-space">  </span>-4.977 6.56e-07 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 22<span class="Apple-converted-space">                  </span>-9.966e+00<span class="Apple-converted-space">  </span>2.871e+00<span class="Apple-converted-space">  </span>-3.471 0.000520 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 23<span class="Apple-converted-space">                  </span>-3.097e+01<span class="Apple-converted-space">  </span>2.825e+00 -10.960<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 24 <span class="Apple-converted-space">                  </span>1.974e+01<span class="Apple-converted-space">  </span>2.871e+00 <span class="Apple-converted-space">  </span>6.876 6.47e-12 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 25<span class="Apple-converted-space">                  </span>-4.517e+01<span class="Apple-converted-space">  </span>2.871e+00 -15.733<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 26<span class="Apple-converted-space">                  </span>-2.566e+01<span class="Apple-converted-space">  </span>2.871e+00<span class="Apple-converted-space">  </span>-8.936<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 27<span class="Apple-converted-space">                  </span>-5.072e+01<span class="Apple-converted-space">  </span>2.871e+00 -17.664<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 28<span class="Apple-converted-space">                  </span>-1.946e+01<span class="Apple-converted-space">  </span>2.825e+00<span class="Apple-converted-space">  </span>-6.889 5.93e-12 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 29<span class="Apple-converted-space">                  </span>-1.295e+01<span class="Apple-converted-space">  </span>2.844e+00<span class="Apple-converted-space">  </span>-4.553 5.35e-06 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 3 <span class="Apple-converted-space">                  </span>-2.079e+01<span class="Apple-converted-space">  </span>2.871e+00<span class="Apple-converted-space">  </span>-7.240 4.80e-13 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 30<span class="Apple-converted-space">                  </span>-3.041e+01<span class="Apple-converted-space">  </span>2.871e+00 -10.592<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 31<span class="Apple-converted-space">                  </span>-1.077e+01<span class="Apple-converted-space">  </span>2.871e+00<span class="Apple-converted-space">  </span>-3.750 0.000178 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 32<span class="Apple-converted-space">                  </span>-2.240e+01<span class="Apple-converted-space">  </span>2.821e+00<span class="Apple-converted-space">  </span>-7.940 2.23e-15 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 33 <span class="Apple-converted-space">                  </span>1.140e+01<span class="Apple-converted-space">  </span>2.871e+00 <span class="Apple-converted-space">  </span>3.972 7.17e-05 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 34<span class="Apple-converted-space">                  </span>-1.972e+00<span class="Apple-converted-space">  </span>2.871e+00<span class="Apple-converted-space">  </span>-0.687 0.492251 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 35<span class="Apple-converted-space">                  </span>-7.325e+00<span class="Apple-converted-space">  </span>2.871e+00<span class="Apple-converted-space">  </span>-2.551 0.010742 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 36<span class="Apple-converted-space">                  </span>-2.804e+01<span class="Apple-converted-space">  </span>2.825e+00<span class="Apple-converted-space">  </span>-9.924<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 37<span class="Apple-converted-space">                  </span>-1.176e+00<span class="Apple-converted-space">  </span>2.871e+00<span class="Apple-converted-space">  </span>-0.409 0.682222 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 38<span class="Apple-converted-space">                  </span>-3.719e+01<span class="Apple-converted-space">  </span>2.825e+00 -13.162<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 39<span class="Apple-converted-space">                  </span>-6.953e+00<span class="Apple-converted-space">  </span>2.871e+00<span class="Apple-converted-space">  </span>-2.422 0.015461 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 4<span class="Apple-converted-space">                    </span>9.970e+00<span class="Apple-converted-space">  </span>2.871e+00 <span class="Apple-converted-space">  </span>3.472 0.000518 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 40<span class="Apple-converted-space">                  </span>-1.391e+01<span class="Apple-converted-space">  </span>2.806e+00<span class="Apple-converted-space">  </span>-4.957 7.26e-07 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 41 <span class="Apple-converted-space">                  </span>7.773e-01<span class="Apple-converted-space">  </span>2.871e+00 <span class="Apple-converted-space">  </span>0.271 0.786600 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 42<span class="Apple-converted-space">                  </span>-3.396e+01<span class="Apple-converted-space">  </span>2.841e+00 -11.956<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 43<span class="Apple-converted-space">                  </span>-1.111e+00<span class="Apple-converted-space">  </span>2.825e+00<span class="Apple-converted-space">  </span>-0.393 0.694262 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 44<span class="Apple-converted-space">                  </span>-3.267e+01<span class="Apple-converted-space">  </span>2.871e+00 -11.379<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 45 <span class="Apple-converted-space">                  </span>3.292e+00<span class="Apple-converted-space">  </span>2.871e+00 <span class="Apple-converted-space">  </span>1.147 0.251526 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 46<span class="Apple-converted-space">                  </span>-1.436e+01<span class="Apple-converted-space">  </span>2.844e+00<span class="Apple-converted-space">  </span>-5.048 4.54e-07 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 5 <span class="Apple-converted-space">                  </span>-2.131e+01<span class="Apple-converted-space">  </span>2.871e+00<span class="Apple-converted-space">  </span>-7.424 1.22e-13 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 6<span class="Apple-converted-space">                    </span>8.113e+00<span class="Apple-converted-space">  </span>2.871e+00 <span class="Apple-converted-space">  </span>2.826 0.004727 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 7 <span class="Apple-converted-space">                  </span>-4.166e+01<span class="Apple-converted-space">  </span>2.871e+00 -14.510<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 8 <span class="Apple-converted-space">                  </span>-2.043e+01<span class="Apple-converted-space">  </span>2.825e+00<span class="Apple-converted-space">  </span>-7.231 5.11e-13 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 9 <span class="Apple-converted-space">                  </span>-3.291e+01<span class="Apple-converted-space">  </span>2.825e+00 -11.646<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)38408<span class="Apple-converted-space">                        </span>1.647e+01<span class="Apple-converted-space">  </span>1.188e+01 <span class="Apple-converted-space">  </span>1.386 0.165851 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)39996<span class="Apple-converted-space">                        </span>5.475e+01<span class="Apple-converted-space">  </span>4.202e+01 <span class="Apple-converted-space">  </span>1.303 0.192590 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)41614 <span class="Apple-converted-space">                      </span>-3.451e+01<span class="Apple-converted-space">  </span>2.949e+01<span class="Apple-converted-space">  </span>-1.170 0.241961 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)49532 <span class="Apple-converted-space">                      </span>-9.632e-02<span class="Apple-converted-space">  </span>1.941e+00<span class="Apple-converted-space">  </span>-0.050 0.960414 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)57860<span class="Apple-converted-space">                        </span>7.864e+01<span class="Apple-converted-space">  </span>1.948e+01 <span class="Apple-converted-space">  </span>4.036 5.48e-05 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)65122<span class="Apple-converted-space">                        </span>3.242e+01<span class="Apple-converted-space">  </span>8.848e+00 <span class="Apple-converted-space">  </span>3.665 0.000249 ***</span></p>
+<p class="p8"><span class="s1">## PlanTypeHMO <span class="Apple-converted-space">                                </span>-2.249e+01<span class="Apple-converted-space">  </span>6.970e+00<span class="Apple-converted-space">  </span>-3.226 0.001258 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## PlanTypePOS <span class="Apple-converted-space">                                        </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## PlanTypePPO<span class="Apple-converted-space">                                  </span>5.091e+01<span class="Apple-converted-space">  </span>7.875e-01<span class="Apple-converted-space">  </span>64.647<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## deduct_in <span class="Apple-converted-space">                                  </span>-5.691e-03<span class="Apple-converted-space">  </span>3.674e-04 -15.487<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## moop_in <span class="Apple-converted-space">                                    </span>-2.186e-04<span class="Apple-converted-space">  </span>3.867e-04<span class="Apple-converted-space">  </span>-0.565 0.571884 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## coinsurance <span class="Apple-converted-space">                                </span>-1.117e-01<span class="Apple-converted-space">  </span>2.948e-02<span class="Apple-converted-space">  </span>-3.790 0.000151 ***</span></p>
+<p class="p8"><span class="s1">## hsa<span class="Apple-converted-space">                                          </span>4.829e+00<span class="Apple-converted-space">  </span>1.057e+00 <span class="Apple-converted-space">  </span>4.571 4.92e-06 ***</span></p>
+<p class="p8"><span class="s1">## bset1<span class="Apple-converted-space">                                        </span>2.890e+01<span class="Apple-converted-space">  </span>1.717e+01 <span class="Apple-converted-space">  </span>1.683 0.092429 . <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## bset2 <span class="Apple-converted-space">                                      </span>-1.627e+01<span class="Apple-converted-space">  </span>1.692e+01<span class="Apple-converted-space">  </span>-0.962 0.336263 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset3 <span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset5 <span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset6<span class="Apple-converted-space">                                        </span>3.149e+00<span class="Apple-converted-space">  </span>2.360e+00 <span class="Apple-converted-space">  </span>1.334 0.182150 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset7<span class="Apple-converted-space">                                        </span>6.541e+00<span class="Apple-converted-space">  </span>1.669e+00 <span class="Apple-converted-space">  </span>3.920 8.92e-05 ***</span></p>
+<p class="p8"><span class="s1">## bset11 <span class="Apple-converted-space">                                      </span>2.343e+01<span class="Apple-converted-space">  </span>8.681e+00 <span class="Apple-converted-space">  </span>2.699 0.006956 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## bset14 <span class="Apple-converted-space">                                      </span>8.044e+00<span class="Apple-converted-space">  </span>1.906e+01 <span class="Apple-converted-space">  </span>0.422 0.673079 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset15 <span class="Apple-converted-space">                                      </span>1.309e-01<span class="Apple-converted-space">  </span>1.045e+01 <span class="Apple-converted-space">  </span>0.013 0.990007 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset16<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset19<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelBronze<span class="Apple-converted-space">    </span>2.331e+00<span class="Apple-converted-space">  </span>4.051e+00 <span class="Apple-converted-space">  </span>0.575 0.565079 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelBronze<span class="Apple-converted-space">    </span>5.034e+00<span class="Apple-converted-space">  </span>4.338e+00 <span class="Apple-converted-space">  </span>1.160 0.245901 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelSilver<span class="Apple-converted-space">    </span>6.949e+00<span class="Apple-converted-space">  </span>3.876e+00 <span class="Apple-converted-space">  </span>1.793 0.073054 . <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelSilver <span class="Apple-converted-space">  </span>-1.395e+00<span class="Apple-converted-space">  </span>4.151e+00<span class="Apple-converted-space">  </span>-0.336 0.736907 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelGold<span class="Apple-converted-space">      </span>1.009e+01<span class="Apple-converted-space">  </span>4.043e+00 <span class="Apple-converted-space">  </span>2.496 0.012590 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelGold<span class="Apple-converted-space">      </span>4.180e+00<span class="Apple-converted-space">  </span>4.319e+00 <span class="Apple-converted-space">  </span>0.968 0.333137 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelPlatinum<span class="Apple-converted-space">  </span>1.615e+01<span class="Apple-converted-space">  </span>7.801e+00 <span class="Apple-converted-space">  </span>2.070 0.038477 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelPlatinum <span class="Apple-converted-space">        </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## ---</span></p>
+<p class="p8"><span class="s1">## Signif. codes:<span class="Apple-converted-space">  </span>0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Residual standard error: 30.99 on 10937 degrees of freedom</span></p>
+<p class="p8"><span class="s1">## Multiple R-squared:<span class="Apple-converted-space">  </span>0.9906, Adjusted R-squared:<span class="Apple-converted-space">  </span>0.9905<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## F-statistic: 1.476e+04 on 78 and 10937 DF,<span class="Apple-converted-space">  </span>p-value: &lt; 2.2e-16</span></p>
+<h3 style="margin: 0.0px 0.0px 10.0px 0.0px; line-height: 26.0px; font: 24.0px 'Helvetica Neue'; color: #333333; -webkit-text-stroke: #333333"><span class="s1">Pennsylvania</span></h3>
+<p class="p5"><span class="s1">summary(pareg&lt;-lm(as.formula(paste("IndividualRate ~ -1 + factor(BusinessYear)*MetalLevel+RatingAreaId+factor(IssuerId)+",</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">                           </span>"PlanType + deduct_in + moop_in + coinsurance + hsa +",</span></p>
+<p class="p5"><span class="s1"><span class="Apple-converted-space">                           </span>paste(pasets, collapse="+"))), data=papremiumsplus))</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Call:</span></p>
+<p class="p8"><span class="s1">## lm(formula = as.formula(paste("IndividualRate ~ -1 + factor(BusinessYear)*MetalLevel+RatingAreaId+factor(IssuerId)+",<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">    </span>"PlanType + deduct_in + moop_in + coinsurance + hsa +", paste(pasets,<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">        </span>collapse = "+"))), data = papremiumsplus)</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Residuals:</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space">      </span>Min <span class="Apple-converted-space">      </span>1Q <span class="Apple-converted-space">  </span>Median <span class="Apple-converted-space">      </span>3Q<span class="Apple-converted-space">      </span>Max<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## -110.726<span class="Apple-converted-space">  </span>-21.945 <span class="Apple-converted-space">  </span>-1.918 <span class="Apple-converted-space">  </span>21.833<span class="Apple-converted-space">  </span>108.036<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Coefficients: (7 not defined because of singularities)</span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">                                              </span>Estimate Std. Error t value Pr(&gt;|t|) <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2014 <span class="Apple-converted-space">                    </span>2.549e+02<span class="Apple-converted-space">  </span>2.326e+01<span class="Apple-converted-space">  </span>10.958<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015 <span class="Apple-converted-space">                    </span>2.699e+02<span class="Apple-converted-space">  </span>2.342e+01<span class="Apple-converted-space">  </span>11.524<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016 <span class="Apple-converted-space">                    </span>2.941e+02<span class="Apple-converted-space">  </span>2.380e+01<span class="Apple-converted-space">  </span>12.358<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelBronze <span class="Apple-converted-space">                            </span>4.388e+01<span class="Apple-converted-space">  </span>4.706e+00 <span class="Apple-converted-space">  </span>9.324<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelSilver <span class="Apple-converted-space">                            </span>8.105e+01<span class="Apple-converted-space">  </span>4.840e+00<span class="Apple-converted-space">  </span>16.746<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelGold <span class="Apple-converted-space">                              </span>1.145e+02<span class="Apple-converted-space">  </span>5.660e+00<span class="Apple-converted-space">  </span>20.239<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## MetalLevelPlatinum <span class="Apple-converted-space">                          </span>1.427e+02<span class="Apple-converted-space">  </span>6.952e+00<span class="Apple-converted-space">  </span>20.521<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 2<span class="Apple-converted-space">                    </span>9.731e+00<span class="Apple-converted-space">  </span>2.390e+00 <span class="Apple-converted-space">  </span>4.072 4.76e-05 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 3<span class="Apple-converted-space">                    </span>5.615e+01<span class="Apple-converted-space">  </span>3.104e+00<span class="Apple-converted-space">  </span>18.090<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 4 <span class="Apple-converted-space">                  </span>-1.988e+00<span class="Apple-converted-space">  </span>2.390e+00<span class="Apple-converted-space">  </span>-0.832 0.405442 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 5<span class="Apple-converted-space">                    </span>9.220e+00<span class="Apple-converted-space">  </span>2.365e+00 <span class="Apple-converted-space">  </span>3.898 9.90e-05 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 6<span class="Apple-converted-space">                    </span>4.013e+01<span class="Apple-converted-space">  </span>2.212e+00<span class="Apple-converted-space">  </span>18.146<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 7<span class="Apple-converted-space">                    </span>6.027e+01<span class="Apple-converted-space">  </span>2.616e+00<span class="Apple-converted-space">  </span>23.038<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 8<span class="Apple-converted-space">                    </span>1.096e+02<span class="Apple-converted-space">  </span>3.646e+00<span class="Apple-converted-space">  </span>30.057<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## RatingAreaIdRating Area 9<span class="Apple-converted-space">                    </span>4.713e+01<span class="Apple-converted-space">  </span>2.546e+00<span class="Apple-converted-space">  </span>18.511<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)16481<span class="Apple-converted-space">                        </span>6.014e+01<span class="Apple-converted-space">  </span>4.834e+00<span class="Apple-converted-space">  </span>12.441<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)19068<span class="Apple-converted-space">                        </span>4.153e+01<span class="Apple-converted-space">  </span>3.075e+01 <span class="Apple-converted-space">  </span>1.351 0.176925 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)22444 <span class="Apple-converted-space">                      </span>-2.851e+02<span class="Apple-converted-space">  </span>5.091e+01<span class="Apple-converted-space">  </span>-5.601 2.30e-08 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)23489 <span class="Apple-converted-space">                      </span>-4.683e+01<span class="Apple-converted-space">  </span>2.651e+01<span class="Apple-converted-space">  </span>-1.766 0.077432 . <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)24872 <span class="Apple-converted-space">                      </span>-1.289e+02<span class="Apple-converted-space">  </span>2.614e+01<span class="Apple-converted-space">  </span>-4.932 8.53e-07 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)31609<span class="Apple-converted-space">                        </span>8.842e+01<span class="Apple-converted-space">  </span>3.875e+01 <span class="Apple-converted-space">  </span>2.282 0.022563 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)33709 <span class="Apple-converted-space">                      </span>-2.058e+02<span class="Apple-converted-space">  </span>2.226e+01<span class="Apple-converted-space">  </span>-9.246<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)33871<span class="Apple-converted-space">                        </span>1.305e+02<span class="Apple-converted-space">  </span>4.080e+01 <span class="Apple-converted-space">  </span>3.197 0.001399 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)33906 <span class="Apple-converted-space">                      </span>-9.855e+01<span class="Apple-converted-space">  </span>2.022e+01<span class="Apple-converted-space">  </span>-4.874 1.15e-06 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)36247 <span class="Apple-converted-space">                      </span>-1.878e+02<span class="Apple-converted-space">  </span>2.769e+01<span class="Apple-converted-space">  </span>-6.783 1.38e-11 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)45127 <span class="Apple-converted-space">                      </span>-1.186e+02<span class="Apple-converted-space">  </span>1.745e+01<span class="Apple-converted-space">  </span>-6.794 1.28e-11 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)52899<span class="Apple-converted-space">                        </span>7.210e+01<span class="Apple-converted-space">  </span>1.681e+01 <span class="Apple-converted-space">  </span>4.289 1.85e-05 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)53789 <span class="Apple-converted-space">                      </span>-1.043e+02<span class="Apple-converted-space">  </span>2.309e+01<span class="Apple-converted-space">  </span>-4.516 6.53e-06 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)55957 <span class="Apple-converted-space">                      </span>-1.474e+02<span class="Apple-converted-space">  </span>2.250e+01<span class="Apple-converted-space">  </span>-6.554 6.45e-11 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)62560<span class="Apple-converted-space">                        </span>2.627e+01<span class="Apple-converted-space">  </span>1.600e+01 <span class="Apple-converted-space">  </span>1.642 0.100673 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)64844 <span class="Apple-converted-space">                      </span>-7.961e+01<span class="Apple-converted-space">  </span>2.398e+01<span class="Apple-converted-space">  </span>-3.320 0.000908 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)70194 <span class="Apple-converted-space">                      </span>-1.336e+02<span class="Apple-converted-space">  </span>2.214e+01<span class="Apple-converted-space">  </span>-6.035 1.76e-09 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)75729 <span class="Apple-converted-space">                      </span>-3.058e+02<span class="Apple-converted-space">  </span>4.796e+01<span class="Apple-converted-space">  </span>-6.376 2.06e-10 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)82795 <span class="Apple-converted-space">                      </span>-8.273e+01<span class="Apple-converted-space">  </span>1.968e+01<span class="Apple-converted-space">  </span>-4.204 2.69e-05 ***</span></p>
+<p class="p8"><span class="s1">## factor(IssuerId)91303 <span class="Apple-converted-space">                      </span>-9.298e+01<span class="Apple-converted-space">  </span>2.202e+01<span class="Apple-converted-space">  </span>-4.222 2.48e-05 ***</span></p>
+<p class="p8"><span class="s1">## PlanTypeHMO <span class="Apple-converted-space">                                </span>-2.501e+01<span class="Apple-converted-space">  </span>1.565e+01<span class="Apple-converted-space">  </span>-1.598 0.110101 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## PlanTypePOS <span class="Apple-converted-space">                                </span>-6.154e+00<span class="Apple-converted-space">  </span>1.527e+01<span class="Apple-converted-space">  </span>-0.403 0.686980 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## PlanTypePPO<span class="Apple-converted-space">                                  </span>2.866e+01<span class="Apple-converted-space">  </span>2.189e+00<span class="Apple-converted-space">  </span>13.092<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## deduct_in <span class="Apple-converted-space">                                  </span>-2.465e-04<span class="Apple-converted-space">  </span>6.549e-04<span class="Apple-converted-space">  </span>-0.376 0.706630 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## moop_in <span class="Apple-converted-space">                                    </span>-1.469e-04<span class="Apple-converted-space">  </span>6.257e-04<span class="Apple-converted-space">  </span>-0.235 0.814454 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## coinsurance<span class="Apple-converted-space">                                  </span>7.057e-03<span class="Apple-converted-space">  </span>4.560e-02 <span class="Apple-converted-space">  </span>0.155 0.877021 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## hsa <span class="Apple-converted-space">                                        </span>-5.095e+00<span class="Apple-converted-space">  </span>1.772e+00<span class="Apple-converted-space">  </span>-2.875 0.004059 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## bset1<span class="Apple-converted-space">                                        </span>2.504e+01<span class="Apple-converted-space">  </span>1.600e+01 <span class="Apple-converted-space">  </span>1.565 0.117752 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset2<span class="Apple-converted-space">                                        </span>2.789e+00<span class="Apple-converted-space">  </span>1.110e+01 <span class="Apple-converted-space">  </span>0.251 0.801605 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset3<span class="Apple-converted-space">                                        </span>1.788e+02<span class="Apple-converted-space">  </span>3.709e+01 <span class="Apple-converted-space">  </span>4.821 1.49e-06 ***</span></p>
+<p class="p8"><span class="s1">## bset4 <span class="Apple-converted-space">                                      </span>-2.617e+01<span class="Apple-converted-space">  </span>1.614e+01<span class="Apple-converted-space">  </span>-1.621 0.105009 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset5 <span class="Apple-converted-space">                                      </span>-2.468e+01<span class="Apple-converted-space">  </span>1.150e+01<span class="Apple-converted-space">  </span>-2.146 0.031953 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## bset6 <span class="Apple-converted-space">                                      </span>-1.402e+02<span class="Apple-converted-space">  </span>3.186e+01<span class="Apple-converted-space">  </span>-4.399 1.12e-05 ***</span></p>
+<p class="p8"><span class="s1">## bset7 <span class="Apple-converted-space">                                      </span>-8.100e+01<span class="Apple-converted-space">  </span>2.127e+01<span class="Apple-converted-space">  </span>-3.808 0.000143 ***</span></p>
+<p class="p8"><span class="s1">## bset8 <span class="Apple-converted-space">                                      </span>-1.806e+01<span class="Apple-converted-space">  </span>4.522e+00<span class="Apple-converted-space">  </span>-3.995 6.60e-05 ***</span></p>
+<p class="p8"><span class="s1">## bset9 <span class="Apple-converted-space">                                      </span>-2.940e+01<span class="Apple-converted-space">  </span>1.143e+01<span class="Apple-converted-space">  </span>-2.573 0.010127 * <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## bset11<span class="Apple-converted-space">                                      </span>-2.630e+01<span class="Apple-converted-space">  </span>5.695e+00<span class="Apple-converted-space">  </span>-4.618 4.01e-06 ***</span></p>
+<p class="p8"><span class="s1">## bset13<span class="Apple-converted-space">                                      </span>-5.730e+00<span class="Apple-converted-space">  </span>5.623e+00<span class="Apple-converted-space">  </span>-1.019 0.308250 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset14<span class="Apple-converted-space">                                      </span>-9.291e+01<span class="Apple-converted-space">  </span>4.508e+00 -20.609<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## bset15<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset16 <span class="Apple-converted-space">                                      </span>9.040e+01<span class="Apple-converted-space">  </span>3.992e+00<span class="Apple-converted-space">  </span>22.646<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## bset17 <span class="Apple-converted-space">                                      </span>6.226e+01<span class="Apple-converted-space">  </span>2.406e+01 <span class="Apple-converted-space">  </span>2.588 0.009698 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## bset18<span class="Apple-converted-space">                                      </span>-1.252e+02<span class="Apple-converted-space">  </span>3.074e+01<span class="Apple-converted-space">  </span>-4.074 4.72e-05 ***</span></p>
+<p class="p8"><span class="s1">## bset20<span class="Apple-converted-space">                                      </span>-5.116e+00<span class="Apple-converted-space">  </span>1.020e+01<span class="Apple-converted-space">  </span>-0.502 0.615909 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset21<span class="Apple-converted-space">                                      </span>-5.006e+00<span class="Apple-converted-space">  </span>5.935e+00<span class="Apple-converted-space">  </span>-0.844 0.398978 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset24<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset25<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset26 <span class="Apple-converted-space">                                      </span>1.359e+02<span class="Apple-converted-space">  </span>2.888e+01 <span class="Apple-converted-space">  </span>4.706 2.62e-06 ***</span></p>
+<p class="p8"><span class="s1">## bset27<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset28<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset29<span class="Apple-converted-space">                                      </span>-1.771e+00<span class="Apple-converted-space">  </span>2.782e+00<span class="Apple-converted-space">  </span>-0.637 0.524397 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset30<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## bset31<span class="Apple-converted-space">                                              </span>NA <span class="Apple-converted-space">        </span>NA<span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">      </span>NA <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelBronze <span class="Apple-converted-space">  </span>-8.894e+00<span class="Apple-converted-space">  </span>8.056e+00<span class="Apple-converted-space">  </span>-1.104 0.269643 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelBronze <span class="Apple-converted-space">  </span>-1.035e+01<span class="Apple-converted-space">  </span>8.402e+00<span class="Apple-converted-space">  </span>-1.232 0.218072 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelSilver <span class="Apple-converted-space">  </span>-7.097e-01<span class="Apple-converted-space">  </span>7.705e+00<span class="Apple-converted-space">  </span>-0.092 0.926618 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelSilver<span class="Apple-converted-space">    </span>7.074e+00<span class="Apple-converted-space">  </span>7.715e+00 <span class="Apple-converted-space">  </span>0.917 0.359260 <span class="Apple-converted-space">   </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelGold<span class="Apple-converted-space">      </span>1.445e+01<span class="Apple-converted-space">  </span>7.719e+00 <span class="Apple-converted-space">  </span>1.872 0.061269 . <span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelGold<span class="Apple-converted-space">      </span>2.190e+01<span class="Apple-converted-space">  </span>7.798e+00 <span class="Apple-converted-space">  </span>2.809 0.005002 **<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2015:MetalLevelPlatinum<span class="Apple-converted-space">  </span>5.790e+01<span class="Apple-converted-space">  </span>8.460e+00 <span class="Apple-converted-space">  </span>6.844 9.06e-12 ***</span></p>
+<p class="p8"><span class="s1">## factor(BusinessYear)2016:MetalLevelPlatinum<span class="Apple-converted-space">  </span>8.844e+01<span class="Apple-converted-space">  </span>8.533e+00<span class="Apple-converted-space">  </span>10.364<span class="Apple-converted-space">  </span>&lt; 2e-16 ***</span></p>
+<p class="p8"><span class="s1">## ---</span></p>
+<p class="p8"><span class="s1">## Signif. codes:<span class="Apple-converted-space">  </span>0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## Residual standard error: 33.01 on 3439 degrees of freedom</span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">  </span>(3 observations deleted due to missingness)</span></p>
+<p class="p8"><span class="s1">## Multiple R-squared:<span class="Apple-converted-space">  </span>0.9873, Adjusted R-squared:<span class="Apple-converted-space">  </span>0.9871<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## F-statistic:<span class="Apple-converted-space">  </span>3879 on 69 and 3439 DF,<span class="Apple-converted-space">  </span>p-value: &lt; 2.2e-16</span></p>
+<h2 style="margin: 0.0px 0.0px 10.0px 0.0px; line-height: 33.0px; font: 30.0px 'Helvetica Neue'; color: #333333; -webkit-text-stroke: #333333"><span class="s1">Negative Coefficients</span></h2>
+<p class="p4"><span class="s1">Why are some benefit coefficients negative? Let’s just poke around a bit.</span></p>
+<p class="p4"><span class="s1">Texas benefit set 5:</span></p>
+<p class="p5"><span class="s1">txbenefits[[5]]</span></p>
+<p class="p8"><span class="s1">## [1] "highbloodpressurehighcholesterol"</span></p>
+<p class="p4"><span class="s1">This is a disease management plan for high blood pressure and high cholesterol. This is seemingly a positive benefit.</span></p>
+<p class="p4"><span class="s1">It’s offered by a majority of plans:</span></p>
+<p class="p5"><span class="s1">table(txpremiumsplus$bset5)</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space">    </span>0<span class="Apple-converted-space">    </span>1<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## 1643 3492</span></p>
+<p class="p4"><span class="s1">What’s the variation across Issuer?</span></p>
+<p class="p5"><span class="s1">txpremiumsplus %&gt;% group_by(IssuerId) %&gt;% summarize(propb5=mean(bset5)) %&gt;% kable()</span></p>
+<table cellspacing="0" cellpadding="0" class="t1">
+  <tbody>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1"><b>IssuerId</b></span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1"><b>propb5</b></span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">20069</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">26539</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">27248</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">28020</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">29418</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">32673</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.6971429</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">33602</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">37392</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">37755</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">40788</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">45786</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">46224</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.8571429</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">55409</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.0555556</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">63141</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.7674419</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">63509</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">66252</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">71837</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.3333333</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">76589</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">85947</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">87226</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">91716</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">98809</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.0000000</span></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="p4"><span class="s1">There are some companies that only offer it for some plans, but most either offer it or not across all of their plans.</span></p>
+<p class="p4"><span class="s1">By MetalLevel and PlanType:</span></p>
+<p class="p5"><span class="s1">txpremiumsplus %&gt;% group_by(MetalLevel, PlanType) %&gt;% summarize(propb5=mean(bset5)) %&gt;% kable()</span></p>
+<table cellspacing="0" cellpadding="0" class="t1">
+  <tbody>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1"><b>MetalLevel</b></span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1"><b>PlanType</b></span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1"><b>propb5</b></span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Catastrophic</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">EPO</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.3333333</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Catastrophic</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">HMO</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.8271605</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Catastrophic</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">POS</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Catastrophic</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">PPO</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.6790123</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Bronze</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">EPO</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.1792453</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Bronze</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">HMO</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.7619590</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Bronze</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">POS</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.1764706</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Bronze</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">PPO</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.6774848</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Silver</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">EPO</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.1942446</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Silver</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">HMO</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.8594080</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Silver</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">POS</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.1764706</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Silver</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">PPO</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.7205170</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Gold</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">EPO</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.0588235</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Gold</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">HMO</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.7879213</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Gold</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">POS</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.1764706</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Gold</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">PPO</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.8193018</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Platinum</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">EPO</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.2000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Platinum</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">HMO</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.6538462</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Platinum</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">POS</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td3">
+        <p class="p10"><span class="s1">Platinum</span></p>
+      </td>
+      <td valign="middle" class="td4">
+        <p class="p10"><span class="s1">PPO</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.1071429</span></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="p4"><span class="s1">It’s not necessarily offered more by higher Metal Level plans, or by certain plan types.</span></p>
+<p class="p4"><span class="s1">If we just restrict to one metal level and plan type, compare premiums:</span></p>
+<p class="p5"><span class="s1">txpremiumsplus %&gt;% filter(MetalLevel=="Silver", PlanType=="PPO") %&gt;% group_by(bset5) %&gt;% summarize(mean(IndividualRate))</span></p>
+<p class="p8"><span class="s1">## Source: local data frame [2 x 2]</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">  </span>bset5 mean(IndividualRate)</span></p>
+<p class="p8"><span class="s1">## <span class="Apple-converted-space">  </span>(dbl)<span class="Apple-converted-space">                </span>(dbl)</span></p>
+<p class="p8"><span class="s1">## 1 <span class="Apple-converted-space">    </span>0 <span class="Apple-converted-space">            </span>328.5762</span></p>
+<p class="p8"><span class="s1">## 2 <span class="Apple-converted-space">    </span>1 <span class="Apple-converted-space">            </span>298.2676</span></p>
+<p class="p4"><span class="s1">Those plans without the benefit have higher premiums (obviously there are a lot of factors not controlled for, but still…).</span></p>
+<p class="p4"><span class="s1">Pick something that isn’t a disease management plan:</span></p>
+<p class="p5"><span class="s1">txbenefits[[16]]</span></p>
+<p class="p8"><span class="s1">## [1] "autismspectrumdisorders"</span></p>
+<p class="p4"><span class="s1">Coverage for autism – should be good.</span></p>
+<p class="p5"><span class="s1">txpremiumsplus %&gt;% group_by(IssuerId) %&gt;% summarize(propb16=mean(bset16)) %&gt;% kable()</span></p>
+<table cellspacing="0" cellpadding="0" class="t1">
+  <tbody>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1"><b>IssuerId</b></span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1"><b>propb16</b></span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">20069</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">26539</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">27248</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.6551724</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">28020</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">29418</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">32673</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">33602</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.8539326</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">37392</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">0.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">37755</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">40788</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">45786</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">46224</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">55409</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">63141</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">63509</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">66252</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">71837</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">76589</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">85947</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">87226</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">91716</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td valign="middle" class="td1">
+        <p class="p9"><span class="s1">98809</span></p>
+      </td>
+      <td valign="middle" class="td2">
+        <p class="p9"><span class="s1">1.0000000</span></p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p class="p4"><span class="s1">There are only a few issuers who don’t offer it.</span></p>
+<p class="p5"><span class="s1">table(txpremiumsplus$PlanType[txpremiumsplus$IssuerId %in% c(20069, 37392)])</span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">## EPO HMO<span class="Apple-converted-space"> </span></span></p>
+<p class="p8"><span class="s1">##<span class="Apple-converted-space">  </span>24<span class="Apple-converted-space">  </span>20</span></p>
+<p class="p4"><span class="s1">These Issuers are offering mostly exclusive provider type plans (either EPO or HMO), which tend to be lower premium.</span></p>
+<p class="p4"><span class="s1">Worth more analysis on other benefits, but this gives some hints.</span></p>
+</body>
+</html>
